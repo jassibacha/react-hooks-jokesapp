@@ -9,20 +9,41 @@ function JokeList({ numJokesToGet = 5 }) {
     const [jokes, setJokes] = React.useState([]);
     const [isLoading, setIsLoading] = React.useState(true);
 
-    /* at mount/load, get jokes */
+    /* store jokes in localstorage */
     useEffect(() => {
-        getJokes();
-    }, []); // Empty array means this effect runs once after the initial render
+        /* only save if there are jokes */
+        if (jokes.length > 0) {
+            window.localStorage.setItem('jokes', JSON.stringify(jokes));
+        }
+    }, [jokes]); /* run when jokes changes */
+
+    /* at mount/load, get jokes from localstorage or API */
+    useEffect(() => {
+        const savedJokes = window.localStorage.getItem('jokes');
+        // console.log(
+        //     'savedJokes = ',
+        //     savedJokes,
+        //     'parsed = ',
+        //     JSON.parse(savedJokes)
+        // );
+        if (savedJokes && JSON.parse(savedJokes).length > 0) {
+            //console.log('savedJokes = ', savedJokes);
+            setJokes(JSON.parse(savedJokes));
+            setIsLoading(false);
+        } else {
+            getJokes();
+        }
+    }, []); /* Empty array means this effect runs once after the initial render */
 
     /* retrieve jokes from API */
     async function getJokes() {
-        console.log('getJokes called');
+        //console.log('getJokes called');
         try {
             // load jokes one at a time, adding not-yet-seen jokes
             let jokes = [];
             let seenJokes = new Set();
             while (jokes.length < numJokesToGet) {
-                console.log('while loop, length = ', jokes.length);
+                //console.log('while loop, length = ', jokes.length);
                 let res = await axios.get('https://icanhazdadjoke.com', {
                     headers: { Accept: 'application/json' },
                 });
@@ -58,7 +79,7 @@ function JokeList({ numJokesToGet = 5 }) {
     }
 
     let sortedJokes = [...jokes].sort((a, b) => b.votes - a.votes);
-    console.log('sortedJokes = ', sortedJokes);
+    //console.log('sortedJokes = ', sortedJokes);
     if (isLoading) {
         return (
             <div className="loading">
